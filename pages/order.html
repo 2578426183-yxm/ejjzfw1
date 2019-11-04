@@ -1,0 +1,324 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>订单管理</title>
+	<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/5.10.2/css/all.css">
+	<link rel="stylesheet" type="text/css" href="../css/order.css">
+	<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+	<script type="text/javascript" src="../bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../js/order.js"></script>
+</head>
+<style>
+.order{
+  box-sizing: border-box;
+  padding-right: 10px;
+}
+.btns{
+  padding-left: 10px;
+}
+table.table{
+    box-sizing: border-box;
+    width: 100%;
+    border-collapse: collapse;/*合并表格边框*/
+    margin: 10px;
+}
+table.table td ,
+table.table th{
+  border: 1px solid #ccc;
+  line-height: 1em;
+}
+</style>
+<script>
+  var baseURL = "http://134.175.100.63:6677";
+// 初始化数据
+function initData(){
+  var url = "/order/findAll";
+  $.get(baseURL+url,function(result){
+    if(result.status === 200){
+      $("#order-table > tbody").empty();
+        result.data.forEach(function(item){
+          $(`<tr>
+            <td><input type="checkbox" name="id" value="`+item.id+`"></td>
+            <td class="orderTime">`+item.orderTime+`</td>
+            <td class="total">`+item.total+`</td>
+            <td class="customerId">`+item.customerId+`</td>
+            <td class="waiterId">`+item.waiterId+`</td>
+            <td class="addressId">`+item.addressId+`</td>
+            <td>
+              <a class="btn_del" href="javascript:void(0)">删除</a>
+              <a class="btn_upd" href="javascript:void(0)">修改</a>
+            </td>
+          </tr>`).appendTo("#order-table > tbody");
+        });
+    }
+  });
+}
+//关闭模态框
+function closeModal(){
+  $(this).parents(".modal").modal("hide");
+}
+//为添加按钮绑定事件处理函数
+function add(){
+  $("#add-btn").click(function(){
+    $("input[name=id]").val("");
+    $("#order-form input[name=orderTime]").val("");
+    $("#order-form input[name=total]").val("");
+    $("#order-form input[name=customerId]").val("");
+    $("#order-form input[name=waiterId]").val("");
+    $("#order-form input[name=addressId]").val("");
+    $("#orderModal").modal("show");
+  });
+}
+
+//查询所有顾客id，放入搜索下拉框中
+//在页面加载的时候执行该函数
+function searchCustomerId(){
+  //设置顾客的findAll请求地址
+  var url_findCustomerId = baseURL+"/customer/findAll";
+  $.get(url_findCustomerId,function(result){
+    //将结果遍历，拿到Id
+    result.data.forEach(function(item){
+      // 新创建节点，并追加到select中
+        /*
+        *第一个item.id放在value中，是为了根据顾客id查询的时候可以获取到此option的值
+        *第二个item.id放在option中间是为了显示查询到的id的值
+        */
+        var newOption = $(`<option value="`+item.id+`">`+item.id+`</option>`);
+        //将遍历到的顾客id追加到搜索下拉框中
+        $("#customerId-select").append(newOption);
+      });
+  });
+}
+
+//查询所有员工id，放入搜索下拉框中
+//在页面加载的时候执行该函数
+function searchWaiterId(){
+  //设置员工的findAll请求地址
+  var url_findCustomerId = baseURL+"/waiter/findAll";
+  $.get(url_findCustomerId,function(result){
+    //将结果遍历，拿到员工Id
+    result.data.forEach(function(item){
+      // 新创建节点，并追加到select中
+        /*
+        *第一个item.id放在value中，是为了根据员工id查询的时候可以获取到此option的值
+        *第二个item.id放在option中间是为了显示查询到的id的值
+        */
+        var newOption = $(`<option value="`+item.id+`">`+item.id+`</option>`);
+        //将遍历到的员工id追加到搜索下拉框中
+        $("#waiterId-select").append(newOption);
+      });
+  });
+}
+
+//查询所有地址id，放入搜索下拉框中
+//在页面加载的时候执行该函数
+function searchAddressId(){
+  //设置地址的findAll请求地址
+  var url_findCustomerId = baseURL+"/address/findAll";
+  $.get(url_findCustomerId,function(result){
+    //将结果遍历，拿到地址Id
+    result.data.forEach(function(item){
+      // 新创建节点，并追加到select中
+        /*
+        *第一个item.id放在value中，是为了根据地址id查询的时候可以获取到此option的值
+        *第二个item.id放在option中间是为了显示查询到的id的值
+        */
+        var newOption = $(`<option value="`+item.id+`">`+item.id+`</option>`);
+        //将遍历到的地址id追加到搜索下拉框中
+        $("#addressId-select").append(newOption);
+      });
+  });
+}
+
+//保存按钮功能函数
+function save(){
+  //保存数据
+    //1、获取有效值
+    var orderTime = $("input[name=orderTime]").val();
+    var total = $("input[name=total]").val();
+    var customerId = $("input[name=customerId]").val();
+    var waiterId = $("input[name=waiterId]").val();
+    var addressId = $("input[name=addressId]").val();
+    var id = $("input[name=id]").val();
+    // 2. 与后台进行交互
+    var data;
+    if(id){
+      data = "id="+id+"&orderTime="+orderTime+"&total="+total+"&customerId="+customerId+"&waiterId="+waiterId+"&addressId="+addressId;
+    }else{
+      data = "orderTime="+orderTime+"&total="+total+"&customerId="+customerId+"&waiterId="+waiterId+"&addressId="+addressId;
+    }
+    console.log(data,'====')
+    var url = "/order/save";
+    $.post(baseURL+url,data,function(result){
+      if(result.status ===200){
+        $("#orderModal").modal("hide");
+        initData();
+      }else{
+        alert("接口异常");
+      }
+    });
+}
+// 删除功能
+function del() {
+  // 为删除按钮绑定事件
+    $("#order-table > tbody").on("click","a",function(){
+    switch(this.className){
+      case "btn_del":
+        var url = baseURL+"/order/deleteById";
+        //获取Id
+        var id = $(this).parents("tr").find("input").val();
+        var data = "id="+id;
+        // alert(data);
+        $.get(url,data,function(result){
+          alert(result.message);
+          initData();
+        });
+        break;
+      case "btn_upd":
+        //获取ID
+        var id = $(this).parents("tr").find("input").val();
+        //获取表格中信息
+        var orderTime = $(this).parents("tr").children(".orderTime").text();
+        var total = $(this).parents("tr").children(".total").text();
+        var customerId = $(this).parents("tr").children(".customerId").text();
+        var waiterId = $(this).parents("tr").children(".waiterId").text();
+        var addressId = $(this).parents("tr").children(".addressId").text();
+        //将表格中信息添加到表单中
+        $("#order-form input[name=orderTime]").val(orderTime);
+        $("#order-form input[name=total]").val(total);
+        $("#order-form input[name=customerId]").val(customerId);
+        $("#order-form input[name=waiterId]").val(waiterId);
+        $("#order-form input[name=addressId]").val(addressId);
+        $("input[name=id]").val(id);
+        $("#orderModal").modal("show");
+        break;
+    }
+  });
+  //批量删除
+}function batchDelete(){
+      var ids = 
+            $("input[type=checkbox]:checked").map(function(index,item){
+              return $(item).val()
+              }).toArray();
+              var url = baseURL+"/order/batchDelete"
+              var data ="";
+        // var ids = [1,2,3]; => ids=1&ids=2&id=3
+          for(var index in ids){
+            var id = ids[index];
+            if(index == 0){
+              data += "ids="+id
+            } else {
+              data += "&ids="+id
+            }
+          }
+          $.post(url,data,function(result){
+          if(result.status ==200){
+            alert("删除成功");
+            initData();
+          } else {
+            alert(result.message);
+          }
+        });
+      }
+//全局加载函数
+$(function(){
+  //初始化数据加载
+  initData();
+  //添加数据
+  add();
+  //执行保存按钮事件
+  save();
+  //删除、修改数据
+  del();
+  //加载顾客id
+  searchCustomerId();
+  //加载员工id
+  searchWaiterId();
+  //加载地址id
+  searchAddressId();
+});
+</script>
+<body>
+	<div class="order">
+		<div class="btns">
+		<!-- 添加按钮 -->
+			<button id="add-btn" type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#orderModal">添加</button>
+			<!-- 添加的模态框 -->
+			<div class="modal fade" id="orderModal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+    			<div class="modal-dialog" role="document">
+    				<div class="modal-content">
+        				<div class="modal-header">
+            				<h5 class="modal-title" id="orderModalLabel">添加订单</h5>
+        					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            					<span aria-hidden="true">&times;</span>
+        					</button>
+        				</div>
+        				<div class="modal-body">
+							    <form id="order-form">
+							      <div class="form-group row">
+      								<label for="inputText3" class="col-sm-3 col-form-label text-right">订单时间</label>
+      								  <div class="col-sm-9">
+        									<input type="text" class="form-control" id="inputText3" placeholder="请输入订单时间" name="orderTime">
+        								</div>
+    								</div>
+    								<div class="form-group row">
+      								<label for="inputText3" class="col-sm-3 col-form-label text-right">总计</label>
+      								<div class="col-sm-9">
+        									<input type="text" class="form-control" id="inputText3" placeholder="请输入总计" name="total">
+      								</div>
+    								</div>
+    								<div class="form-group row">
+      								<label for="customerId-select" class="col-sm-3 text-right">顾客编号</label>
+      								<div class="col-sm-9">
+                        <select id="customerId-select" class="custom-select" name="customerId">
+                        </select>
+        							</div>
+    								</div>
+                    <div class="form-group row">
+                      <label for="waiterId-select" class="col-sm-3 text-right">员工编号</label>
+                      <div class="col-sm-9">
+                        <select id="waiterId-select" class="custom-select" name="waiterId">
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="addressId-select" class="col-sm-3 text-right">服务地址ID</label>
+                      <div class="col-sm-9">
+                        <select id="addressId-select" class="custom-select" name="addressId">
+                        </select>
+                      </div>
+                    </div>
+  							  </form>
+        				</div>
+        				<div class="modal-footer">
+        					<button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal.call(this)">关闭</button>
+        					<button id="save-btn" type="button" class="btn btn-primary" onclick="save()">保存</button>
+        				</div>
+        			</div>
+    			</div>
+			</div>
+			<div class="btn btn btn-outline-warning">批量导入</div>
+			<div class="btn btn-outline-danger" onclick="batchDelete()">批量删除</div>
+		</div>
+		<table id="order-table" class="table table-hover">
+  		<thead>
+   	 		<tr class="table-info rounded">
+      		<th scope="col">编号</th>
+      		<th scope="col">订单时间</th>
+      		<th scope="col">总计</th>
+      		<th scope="col">顾客编号</th>
+      		<th scope="col">员工编号</th>
+      		<th scope="col">地址编号</th>
+      		<th scope="col">操作</th>
+    		</tr>
+  		</thead>
+  		<tbody>
+  				
+  		</tbody>
+    </table>
+	</div>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>员工管理</title>
+  <link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/5.10.2/css/all.css">
+  <link rel="stylesheet" type="text/css" href="../css/waiter.css">
+  <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+  <script type="text/javascript" src="../bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../js/waiter.js"></script>
+</head> -->
+<style>
+.waiter{
+  box-sizing: border-box;
+  padding-right: 10px;
+}
+.btns{
+  padding-left: 10px;
+}
+table.table{
+    box-sizing: border-box;
+    width: 100%;
+    border-collapse: collapse;/*合并表格边框*/
+    margin: 10px;
+}
+table.table td ,
+table.table th{
+  border: 1px solid #ccc;
+  line-height: 1em;
+}
+</style>
+<script>
+  var baseURL = "http://134.175.100.63:6677";
+// 初始化数据
+function initData(){
+  var url = "/waiter/findAll";
+  $.get(baseURL+url,function(result){
+    if(result.status === 200){
+      $("#waiter-table > tbody").empty();
+        result.data.forEach(function(item){
+          $(`<tr>
+            <td><input type="checkbox" name="id" value="`+item.id+`"></td>
+            <td class="telephone">`+item.telephone+`</td>
+            <td class="password">`+item.password+`</td>
+            <td class="realname">`+item.realname+`</td>
+            <td class="idcard">`+item.idcard+`</td>
+            <td class="status">`+item.status+`</td>
+            <td class="photo">`+item.photo+`</td>
+            <td>
+              <a class="btn_del" href="javascript:void(0)">删除</a>
+              <a class="btn_upd" href="javascript:void(0)">修改</a>
+            </td>
+          </tr>`).appendTo("#waiter-table > tbody");
+        });
+    }
+  });
+}
+//关闭模态框
+function closeModal(){
+  $(this).parents(".modal").modal("hide");
+}
+//为添加按钮绑定事件处理函数
+function add(){
+  $("#add-btn").click(function(){
+    $("input[name=id]").val("");
+    $("#waiter-form input[name=telephone]").val("");
+    $("#waiter-form input[name=password]").val("");
+    $("#waiter-form input[name=realname]").val("");
+    $("#waiter-form input[name=idcard]").val("");
+    $("#waiter-form input[name=status]").val("");
+    $("#waiter-form input[name=photo]").val("");
+    $("#waiterModal").modal("show");
+  });
+}
+//保存按钮功能函数
+function save(){
+  //保存数据
+    //1、获取有效值
+    var telephone = $("input[name=telephone]").val();
+    var password = $("input[name=password]").val();
+    var realname = $("input[name=realname]").val();
+    var idcard = $("input[name=idcard]").val();
+    var status = $("input[name=status]").val();
+    var photo = $("input[name=photo]").val();
+    var id = $("input[name=id]").val();
+    // 2. 与后台进行交互
+    var data;
+    if(id){
+      data = "id="+id+"&telephone="+telephone+"&password="+password+"&realname="+realname+"&idcard="+idcard+"&status="+status+"&photo="+photo;
+    }else{
+      data = "telephone="+telephone+"&password="+password+"&realname="+realname+"&idcard="+idcard+"&status="+status+"&photo="+photo;
+    }
+    var url = "/waiter/saveOrUpdate";
+    $.post(baseURL+url,data,function(result){
+      if(result.status ===200){
+        $("#waiterModal").modal("hide");
+        initData();
+      }else{
+        alert("接口异常");
+      }
+    });
+}
+// 删除功能
+function del() {
+  // 为删除按钮绑定事件
+    $("#waiter-table > tbody").on("click","a",function(){
+    switch(this.className){
+      case "btn_del":
+        var url = baseURL+"/waiter/deleteById";
+        //获取Id
+        var id = $(this).parents("tr").find("input").val();
+        var data = "id="+id;
+        // alert(data);
+        $.get(url,data,function(result){
+          alert(result.message);
+          initData();
+        });
+        break;
+      case "btn_upd":
+        //获取ID
+        var id = $(this).parents("tr").find("input").val();
+        //获取表格中信息
+        var telephone = $(this).parents("tr").children(".telephone").text();
+        var password = $(this).parents("tr").children(".password").text();
+        var realname = $(this).parents("tr").children(".realname").text();
+        var idcard = $(this).parents("tr").children(".idcard").text();
+        var status = $(this).parents("tr").children(".status").text();
+        var photo = $(this).parents("tr").children(".photo").text();
+        //将表格中信息添加到表单中
+        $("#waiter-form input[name=telephone]").val(telephone);
+        $("#waiter-form input[name=password]").val(password);
+        $("#waiter-form input[name=realname]").val(realname);
+        $("#waiter-form input[name=idcard]").val(idcard);
+        $("#waiter-form input[name=status]").val(status);
+        $("#waiter-form input[name=photo]").val(photo);
+        $("input[name=id]").val(id);
+        $("#waiterModal").modal("show");
+        break;
+    }
+  });
+  //批量删除
+}function batchDelete(){
+      var ids = 
+            $("input[type=checkbox]:checked").map(function(index,item){
+              return $(item).val()
+              }).toArray();
+              var url = baseURL+"/waiter/batchDelete"
+              var data ="";
+        // var ids = [1,2,3]; => ids=1&ids=2&id=3
+          for(var index in ids){
+            var id = ids[index];
+            if(index == 0){
+              data += "ids="+id
+            } else {
+              data += "&ids="+id
+            }
+          }
+          $.post(url,data,function(result){
+          if(result.status ==200){
+            alert("删除成功");
+            initData();
+          } else {
+            alert(result.message);
+          }
+        });
+      }
+//全局加载函数
+$(function(){
+  //初始化数据加载
+  initData();
+  //添加数据
+  add();
+  //执行保存按钮事件
+  save();
+  //删除、修改数据
+  del();
+});
+</script>
+<body>
+  <div class="waiter">
+    <div class="btns">
+    <!-- 添加按钮 -->
+      <button id="add-btn" type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#waiterModal">添加</button>
+      <!-- 添加的模态框 -->
+      <div class="modal fade" id="waiterModal" tabindex="-1" role="dialog" aria-labelledby="waiterModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="waitertModalLabel">添加产品</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <form id="waiter-form">
+                    <div class="form-group row">
+                      <label for="inputText3" class="col-sm-2 col-form-label">电话<span class="telephone_test" style="color:red; font-size:12px;">请输入有效的电话号码</span></label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" id="inputText3" placeholder="电话" name="telephone">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="inputPassword3" class="col-sm-2 col-form-label">密码<span class="passowrd_test" style="color:red; font-size:12px;">请输入有效的密码</span></label>
+                      <div class="col-sm-10">
+                          <input type="password" class="form-control" id="inputPassword3" placeholder="密码" name="password">
+                      </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="inputText3" class="col-sm-2 col-form-label">姓名<span class="realname_test" style="color:red; font-size:12px;">请输入真实姓名</span></label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" id="inputText3" placeholder="姓名" name="realname">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="inputText3" class="col-sm-2 col-form-label">身份证<span class="idcard_test" style="color:red; font-size:12px;">请输入有效的身份证号</span></label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" id="inputText3" placeholder="身份证" name="idcard">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="inputText3" class="col-sm-2 col-form-label">状态</label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" id="inputText3" placeholder="状态" name="status">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                      <label for="inputText3" class="col-sm-2 col-form-label">照片</label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" id="inputText3" placeholder="照片" name="photo">
+                        </div>
+                    </div>
+                  </form>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal.call(this)">关闭</button>
+                  <button id="save-btn" type="button" class="btn btn-primary" onclick="save()">保存</button>
+                </div>
+              </div>
+          </div>
+      </div>
+      <div class="btn btn btn-outline-warning">批量导入</div>
+      <div class="btn btn-outline-danger" onclick="batchDelete()">批量删除</div>
+    </div>
+    <table id="waiter-table" class="table table-hover">
+      <thead>
+        <tr class="table-info rounded">
+          <th scope="col">编号</th>
+          <th scope="col">电话</th>
+          <th scope="col">密码</th>
+          <th scope="col">姓名</th>
+          <th scope="col">身份证</th>
+          <th scope="col">状态</th>
+          <th scope="col">照片</th>
+          <th scope="col">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+          
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>分类管理</title>
+	<link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.min.css">
+	<link href="https://cdn.bootcss.com/font-awesome/5.10.2/css/all.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="../css/category.css">
+	<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+	<script type="text/javascript" src="../bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../js/category.js"></script>
+</head> -->
+<style>
+.category{
+  box-sizing: border-box;
+  padding-right: 10px;
+}
+.btns{
+  padding-left: 10px;
+}
+table.table{
+    box-sizing: border-box;
+    width: 100%;
+    border-collapse: collapse;/*合并表格边框*/
+    margin: 10px;
+}
+table.table td ,
+table.table th{
+  border: 1px solid #ccc;
+  line-height: 1em;
+}
+</style>
+<script>
+  var baseURL = "http://134.175.100.63:6677";
+// 初始化数据
+function initData(){
+  var url = "/category/findAll";
+  $.get(baseURL+url,function(result){
+    if(result.status === 200){
+      $("#category-table > tbody").empty();
+        result.data.forEach(function(item){
+          $(`<tr>
+            <td><input type="checkbox" name="id" value="`+item.id+`"></td>
+            <td class="name">`+item.name+`</td>
+            <td class="num">`+item.num+`</td>
+            <td class="parentId">`+item.parentId+`</td>
+            <td>
+              <a class="btn_del" href="javascript:void(0)">删除</a>
+              <a class="btn_upd" href="javascript:void(0)">修改</a>
+            </td>
+          </tr>`).appendTo("#category-table > tbody");
+        });
+    }
+  });
+}
+//关闭模态框
+function closeModal(){
+  $(this).parents(".modal").modal("hide");
+}
+//为添加按钮绑定事件处理函数
+function add(){
+  $("#add-btn").click(function(){
+    $("input[name=id]").val("");
+    $("#category-form input[name=name]").val("");
+    $("#category-form input[name=num]").val("");
+    $("#category-form input[name=parentId]").val("");
+    $("#categoryModal").modal("show");
+  });
+}
+//保存按钮功能函数
+function save(){
+  //保存数据
+    //1、获取有效值
+    var name = $("input[name=name]").val();
+    var num = $("input[name=num]").val();
+    var parentId = $("input[name=parentId]").val();
+    var id = $("input[name=id]").val();
+    // 2. 与后台进行交互
+    var data;
+    if(id){
+      data = "id="+id+"&name="+name+"&num="+num+"&parentId="+parentId;
+    }else{
+      data = "name="+name+"&num="+num+"&parentId="+parentId;
+    }
+    var url = "/category/saveOrUpdate";
+    $.post(baseURL+url,data,function(result){
+      if(result.status ===200){
+        $("#categoryModal").modal("hide");
+        initData();
+      }else{
+        alert("接口异常");
+      }
+    });
+}
+// 删除功能
+function del() {
+  // 为删除按钮绑定事件
+    $("#category-table > tbody").on("click","a",function(){
+    switch(this.className){
+      case "btn_del":
+        var url = baseURL+"/category/deleteById";
+        //获取Id
+        var id = $(this).parents("tr").find("input").val();
+        var data = "id="+id;
+        // alert(data);
+        $.get(url,data,function(result){
+          alert(result.message);
+          initData();
+        });
+        break;
+      case "btn_upd":
+        //获取ID
+        var id = $(this).parents("tr").find("input").val();
+        //获取表格中信息
+        var name = $(this).parents("tr").children(".name").text();
+        var num = $(this).parents("tr").children(".num").text();
+        var parentId = $(this).parents("tr").children(".parentId").text();
+        //将表格中信息添加到表单中
+        $("#category-form input[name=name]").val(name);
+        $("#category-form input[name=num]").val(num);
+        $("#category-form input[name=parentId]").val(parentId);
+        $("input[name=id]").val(id);
+        $("#categoryModal").modal("show");
+        break;
+    }
+  });
+  //批量删除
+}function batchDelete(){
+      var ids = 
+            $("input[type=checkbox]:checked").map(function(index,item){
+              return $(item).val()
+              }).toArray();
+              var url = baseURL+"/category/batchDelete"
+              var data ="";
+        // var ids = [1,2,3]; => ids=1&ids=2&id=3
+          for(var index in ids){
+            var id = ids[index];
+            if(index == 0){
+              data += "ids="+id
+            } else {
+              data += "&ids="+id
+            }
+          }
+          $.post(url,data,function(result){
+          if(result.status ==200){
+            alert("删除成功");
+            initData();
+          } else {
+            alert(result.message);
+          }
+        });
+      }
+//全局加载函数
+$(function(){
+  //初始化数据加载
+  initData();
+  //添加数据
+  add();
+  //执行保存按钮事件
+  save();
+  //删除、修改数据
+  del();
+});
+</script>
+<body>
+	<div class="category">
+    <div class="btns">
+      <!-- 添加按钮 -->
+      <button id="add-btn" type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#categoryModal">添加</button>
+      <!-- 添加的模态框 -->
+      <div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="categoryModalLabel">添加分类</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="category-form">
+                <div class="form-group row">
+                  <label for="inputText3" class="col-sm-2 col-form-label">名称</label>
+                  <div class="col-sm-10">
+                    <input type="text" class="form-control" id="inputText3" placeholder="名称" name="name">
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="inputText3" class="col-sm-2 col-form-label">数量</label>
+                  <div class="col-sm-10">
+                    <input type="text" class="form-control" id="inputText3" placeholder="数量" name="num">
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="inputText3" class="col-sm-2 col-form-label">类型</label>
+                  <div class="col-sm-10">
+                    <input type="text" class="form-control" id="inputText3" placeholder="类型" name="parentId">
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal.call(this)">关闭</button>
+              <button id="save-btn" type="button" class="btn btn-primary" onclick="save()">保存</button>
+            </div>
+          </div>
+        </div>    
+      </div>
+      <div class="btn btn btn-outline-warning">批量导入</div>
+      <div class="btn btn-outline-danger" onclick="batchDelete()">批量删除</div>
+    </div>
+    <table id="category-table" class="table table-hover">
+      <thead>
+        <tr class="table-info rounded">
+          <th scope="col">编号</th>
+          <th scope="col">名称</th>
+          <th scope="col">数量</th>
+          <th scope="col">类型</th>
+          <th scope="col">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+          
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

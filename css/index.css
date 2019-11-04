@@ -1,0 +1,35 @@
+.allcontent{
+    position: absolute;
+ 	width: 100%;
+ 	top: 0;
+ 	bottom: 0;
+ 	background-color: #7aa7c9;
+}
+.left{
+	padding-right: 0;
+}
+.right{
+	position: relative;
+	top: 10px;
+	bottom: 10px;
+	left: 10px;
+	right: 20px;
+	padding-right: 0;
+	padding-left: 0;
+}
+ul{
+	padding-left: 0;
+}
+li{
+	list-style: none;
+}
+a:hover{
+	text-decoration: none;
+}
+.list-group-item-primary{
+	background-color:#7aa7c9;
+	border-color:#ffffff; 
+}
+
+
+
